@@ -39,6 +39,19 @@ Evaluate the specialist's work against these criteria:
 - Is the architecture testable with small dimensions?
 - Are input/output shapes documented clearly?
 
+### User Preference Compliance
+
+The PM includes user preferences in your review prompt under a **"User Preferences (apply these)"** block. Also **Read `.claude/project-state/preferences.md` directly** to check the `### general` and `### model-architecture` sections.
+
+- Did the specialist follow all stated user preferences (from the task prompt and `preferences.md`)?
+- If a preference was violated (e.g., user prefers simple architectures but a complex one was chosen), is the violation clearly justified with technical reasoning in the specialist's output?
+- Are preference-driven choices applied consistently throughout the architecture?
+
+**Severity for preference violations:**
+- Unjustified violation of an explicit preference: **should-fix** (or **must-fix** if the preference relates to a stated requirement)
+- Violation with clear technical justification documented: not an issue
+- Inconsistent application: **should-fix**
+
 ### Design Justification
 - Did the specialist justify the architecture choice over alternatives?
 - Are tradeoffs between competing approaches discussed?
@@ -48,8 +61,8 @@ Evaluate the specialist's work against these criteria:
 
 Every issue you find must be classified:
 
-- **must-fix**: Incorrect tensor shapes, wrong loss function for task, numerical instability, missing critical components (e.g., no normalization in a 50+ layer network), fundamentally wrong architecture for the task.
-- **should-fix**: Suboptimal but functional choices, missing regularization, poor initialization strategy, undocumented assumptions about input data, excessive parameter count.
+- **must-fix**: Incorrect tensor shapes, wrong loss function for task, numerical instability, missing critical components (e.g., no normalization in a 50+ layer network), fundamentally wrong architecture for the task, unjustified violation of a requirement-level user preference.
+- **should-fix**: Suboptimal but functional choices, missing regularization, poor initialization strategy, undocumented assumptions about input data, excessive parameter count, unjustified violation of a stylistic user preference.
 - **nit**: Naming conventions, code style, minor documentation gaps, marginal efficiency improvements.
 
 ## Required Output Format

@@ -108,6 +108,44 @@ else
 fi
 CONTEXT+=$'\n'
 
+# --- User Preferences (strip comments, structure-aware truncation) ---
+PREFS_FILE="$STATE_DIR/preferences.md"
+if [[ -f "$PREFS_FILE" ]] && [[ -s "$PREFS_FILE" ]]; then
+    # Strip HTML comment blocks and the file's own # header before injection
+    prefs_clean=$(sed '/^<!--/,/-->/d' "$PREFS_FILE" | grep -v '^# ' | sed '/^$/N;/^\n$/d')
+    # Count actual preference entries (lines starting with "- ")
+    entry_total=$(echo "$prefs_clean" | grep -c '^- ' 2>/dev/null || echo "0")
+    if [[ "$entry_total" -gt 0 ]]; then
+        CONTEXT+="## User Preferences"$'\n'
+        if [[ "$entry_total" -gt 40 ]]; then
+            # Large: extract all ### sections with up to 10 entries each
+            current_section=""
+            entry_count=0
+            while IFS= read -r pline; do
+                if [[ "$pline" =~ ^###\  ]]; then
+                    current_section="$pline"
+                    entry_count=0
+                    CONTEXT+=$'\n'"$pline"$'\n'
+                elif [[ "$pline" =~ ^-\  ]] && [[ -n "$current_section" ]]; then
+                    entry_count=$((entry_count + 1))
+                    if [[ "$entry_count" -le 10 ]]; then
+                        CONTEXT+="$pline"$'\n'
+                    elif [[ "$entry_count" -eq 11 ]]; then
+                        CONTEXT+="- ... (more entries — read preferences.md)"$'\n'
+                    fi
+                elif [[ -z "$pline" ]]; then
+                    CONTEXT+=$'\n'
+                fi
+            done <<< "$prefs_clean"
+            CONTEXT+=$'\n'"_(${entry_total} total preferences — read .claude/project-state/preferences.md for full list)_"$'\n'
+        else
+            # Small: inject cleaned content directly
+            CONTEXT+="$prefs_clean"$'\n'
+        fi
+        CONTEXT+=$'\n'
+    fi
+fi
+
 # --- Recent Session History (last 5) ---
 if [[ -f "$HISTORY_FILE" ]] && [[ -s "$HISTORY_FILE" ]]; then
     CONTEXT+="## Recent Session History (last 5)"$'\n'
