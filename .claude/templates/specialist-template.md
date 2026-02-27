@@ -2,14 +2,7 @@
 name: {{AGENT_NAME}}
 description: >
   Specialist agent for {{DOMAIN}}. Handles {{SCOPE}}.
-tools:
-  # Default tool set — remove any this specialist should not have
-  - Read
-  - Grep
-  - Glob
-  - Edit
-  - Write
-  - Bash
+tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---
 
