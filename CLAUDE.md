@@ -34,7 +34,7 @@ User -> PM -> Specialist(s) -> Reviewer(s) -> Integration Agent
 | `.claude/project-state/observations.md` | Research observations and notes | PM / Specialists |
 | `.claude/project-state/experiments.md` | Experiment log (params, results, metrics) | PM / Specialists |
 | `.claude/project-state/feedback.md` | Append-only feedback signal log (FB-XXX) | PM |
-| `.claude/project-state/preferences.md` | Distilled user preferences (injected at session start) | PM |
+| `.claude/project-state/preferences.md` | Distilled user preferences (injected into PM context at session start) | PM |
 | `.claude/project-state/agent-log.jsonl` | Agent activity log | SubagentStop hook |
 | `.claude/session-history.jsonl` | Cross-session summaries | SessionEnd hook |
 
@@ -63,7 +63,7 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 ## Hooks (configured in `.claude/settings.json`)
 
 - **SessionStart**: Loads task queue, decisions, observations, experiments, user preferences, session context, history, and git status into context
-- **PreCompact**: Backs up state files before compaction
+- **PreCompact**: Backs up state files before compaction to `.claude/backups/<timestamp>/`. To restore, copy the desired file back to `.claude/project-state/`
 - **SessionEnd**: Appends session summary to history
 - **SubagentStop**: Logs agent activity
 

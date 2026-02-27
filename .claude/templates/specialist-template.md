@@ -44,7 +44,11 @@ Read these files first to check the latest ID and avoid duplicates.
 
 ## User Preferences
 
-The PM includes relevant user preferences in your task prompt under a **"User Preferences (apply these)"** block. As a backup, also **Read `.claude/project-state/preferences.md` directly** at the start of your work — check both the `### general` section and any `### {{DOMAIN}}` section for your domain.
+The PM includes relevant user preferences in your task prompt under a **"User Preferences (apply these)"** block. As a backup, also **Read `.claude/project-state/preferences.md` directly** at the start of your work — check both the `### general` section and the `### {{DOMAIN_PREFIX}}` section for your domain.
+
+<!-- {{DOMAIN_PREFIX}} is the kebab-case domain identifier matching your filename prefix.
+     For example, if this file is "data-pipeline-specialist.md", use "data-pipeline".
+     This is DIFFERENT from {{DOMAIN}} which is a human-readable description. -->
 
 - **Apply all stated preferences** unless doing so would cause correctness issues.
 - If a preference conflicts with technical requirements, explain the conflict in your output and describe which choice you made and why. Note which preference was affected.
