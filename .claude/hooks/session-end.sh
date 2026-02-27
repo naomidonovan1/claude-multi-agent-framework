@@ -23,7 +23,7 @@ SESSION_FILE="$STATE_DIR/session-current.md"
 SUMMARY="No session context available."
 if [[ -f "$SESSION_FILE" ]]; then
     ACTIVE_FOCUS=$(grep -A1 '### Active Focus' "$SESSION_FILE" 2>/dev/null | tail -1 | sed 's/^_//;s/_$//' || echo "unknown")
-    TASKS_TOUCHED=$(sed -n '/### Tasks Touched This Session/,/### /{/### Tasks Touched/d;/### /d;p}' "$SESSION_FILE" 2>/dev/null | grep -E '^\s*-' | head -5 | tr '\n' '; ' || echo "none")
+    TASKS_TOUCHED=$(sed -n '/### Tasks Touched This Session/,/### /{/### Tasks Touched/d;/### /d;p}' "$SESSION_FILE" 2>/dev/null | grep -E '^\s*-' | head -5 | tr '\n' ', ' | sed 's/, $//' || echo "none")
     SUMMARY="Focus: ${ACTIVE_FOCUS}. Tasks: ${TASKS_TOUCHED:-none}"
 fi
 
@@ -36,13 +36,9 @@ TOTAL_IN_PROGRESS=0
 TOTAL_TODO=0
 if [[ -f "$TASKS_FILE" ]]; then
     TOTAL_DONE=$(sed -n '/^### DONE/,/^### \|^$/{ /^### /d; /^$/d; p; }' "$TASKS_FILE" 2>/dev/null | grep -c '^\- \[' || true)
-    TOTAL_DONE="${TOTAL_DONE:-0}"
     TOTAL_IN_REVIEW=$(sed -n '/^### IN-REVIEW/,/^### /{ /^### /d; p; }' "$TASKS_FILE" 2>/dev/null | grep -c '^\- \[' || true)
-    TOTAL_IN_REVIEW="${TOTAL_IN_REVIEW:-0}"
     TOTAL_IN_PROGRESS=$(sed -n '/^### IN-PROGRESS/,/^### /{ /^### /d; p; }' "$TASKS_FILE" 2>/dev/null | grep -c '^\- \[' || true)
-    TOTAL_IN_PROGRESS="${TOTAL_IN_PROGRESS:-0}"
     TOTAL_TODO=$(sed -n '/^### TODO/,/^### /{ /^### /d; p; }' "$TASKS_FILE" 2>/dev/null | grep -c '^\- \[' || true)
-    TOTAL_TODO="${TOTAL_TODO:-0}"
 fi
 
 # Build and append JSON entry using jq for safe escaping

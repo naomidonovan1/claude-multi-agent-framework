@@ -20,7 +20,7 @@ SNAPSHOT_DIR="$BACKUP_DIR/$TIMESTAMP"
 mkdir -p "$SNAPSHOT_DIR"
 
 # Backup all state files
-for file in tasks.md decisions.md session-current.md agent-log.jsonl; do
+for file in tasks.md decisions.md session-current.md observations.md experiments.md agent-log.jsonl; do
     src="$STATE_DIR/$file"
     if [[ -f "$src" ]]; then
         cp "$src" "$SNAPSHOT_DIR/$file"

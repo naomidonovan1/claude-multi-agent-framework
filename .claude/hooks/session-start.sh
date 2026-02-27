@@ -59,10 +59,49 @@ else
 fi
 CONTEXT+=$'\n'
 
-# --- Session Context ---
+# --- Observations (last 3 if large) ---
+OBS_FILE="$STATE_DIR/observations.md"
+if [[ -f "$OBS_FILE" ]]; then
+    line_count=$(wc -l < "$OBS_FILE" | tr -d ' ')
+    if [[ "$line_count" -gt 60 ]]; then
+        CONTEXT+="## Research Observations (last 3 of many)"$'\n'
+        start_line=$(grep -n '^### OBS-' "$OBS_FILE" 2>/dev/null | tail -3 | head -1 | cut -d: -f1)
+        if [[ -n "$start_line" ]]; then
+            CONTEXT+=$(sed -n "${start_line},\$p" "$OBS_FILE")$'\n'
+        fi
+    else
+        CONTEXT+=$(cat "$OBS_FILE")$'\n'
+    fi
+fi
+CONTEXT+=$'\n'
+
+# --- Experiments (last 3 if large) ---
+EXP_FILE="$STATE_DIR/experiments.md"
+if [[ -f "$EXP_FILE" ]]; then
+    line_count=$(wc -l < "$EXP_FILE" | tr -d ' ')
+    if [[ "$line_count" -gt 60 ]]; then
+        CONTEXT+="## Experiment Log (last 3 of many)"$'\n'
+        start_line=$(grep -n '^### EXP-' "$EXP_FILE" 2>/dev/null | tail -3 | head -1 | cut -d: -f1)
+        if [[ -n "$start_line" ]]; then
+            CONTEXT+=$(sed -n "${start_line},\$p" "$EXP_FILE")$'\n'
+        fi
+    else
+        CONTEXT+=$(cat "$EXP_FILE")$'\n'
+    fi
+fi
+CONTEXT+=$'\n'
+
+# --- Session Context (capped at 100 lines) ---
 SESSION_FILE="$STATE_DIR/session-current.md"
 if [[ -f "$SESSION_FILE" ]]; then
-    CONTEXT+=$(cat "$SESSION_FILE")$'\n'
+    line_count=$(wc -l < "$SESSION_FILE" | tr -d ' ')
+    if [[ "$line_count" -gt 100 ]]; then
+        CONTEXT+="## Current Session Context (truncated — $line_count lines)"$'\n'
+        CONTEXT+=$(head -100 "$SESSION_FILE")$'\n'
+        CONTEXT+="... (truncated)"$'\n'
+    else
+        CONTEXT+=$(cat "$SESSION_FILE")$'\n'
+    fi
 else
     CONTEXT+="## Current Session Context"$'\n'
     CONTEXT+="_No session context found._"$'\n'

@@ -155,4 +155,5 @@ The default is strict: all `must-fix` items must be resolved before work is appr
 - Claude Code CLI
 - `jq` (required by hook scripts for JSON parsing)
 - `git` (optional, for git status in session-start hook)
+- `rsync` (optional, for copying framework into existing projects — pre-installed on macOS)
 - Bash 3.2+ (compatible with stock macOS)

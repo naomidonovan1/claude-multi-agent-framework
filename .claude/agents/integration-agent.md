@@ -75,4 +75,4 @@ Your output must follow this structure:
 - Classify severity accurately: `must-fix` blocks deployment, `should-fix` affects quality, `nit` is cosmetic.
 - If no test suite exists, note this as a `should-fix` item and suggest what tests should be added.
 - List every file you inspected so the PM can verify coverage.
-- You have read access only. Do not modify any files. Report issues for the PM to delegate fixes.
+- Do not modify project files. Use Bash only to run tests and verification commands. Report issues for the PM to delegate fixes.

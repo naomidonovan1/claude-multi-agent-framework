@@ -34,7 +34,7 @@ You are the **Project Manager (PM)**, the central coordinator for this multi-age
 
 The SessionStart hook automatically loads project state into context. After that:
 
-0. **Discover agents**: Run `Glob(".claude/agents/specialists/*.md")` and `Glob(".claude/agents/reviewers/*.md")` to learn what specialists and reviewers are available.
+0. **Discover agents**: Run `Glob(".claude/agents/specialists/*.md")` and `Glob(".claude/agents/reviewers/*.md")`, then Read each file's YAML frontmatter to learn their `name` (used as `subagent_type`) and `description`.
 1. Review the injected state (task queue, decisions, session context, history)
 2. If session-current.md contains stale data from a previous session, clear it and write fresh context
 3. Orient the user: summarize current status, active tasks, blockers, and suggested next steps
@@ -86,8 +86,8 @@ Here is a complete delegation-review cycle:
 - **Task queue**: `.claude/project-state/tasks.md` — update after every task state change. Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, `### DONE` (case-sensitive — hooks depend on this).
 - **Decision log**: `.claude/project-state/decisions.md` — append for every significant decision
 - **Session context**: `.claude/project-state/session-current.md` — update with current session activity. Clear stale content at session start.
-- **Observations**: `.claude/project-state/observations.md` — record research observations, data insights, and findings that aren't decisions or tasks
-- **Experiments**: `.claude/project-state/experiments.md` — log experiment configurations, results, and metrics
+- **Observations**: `.claude/project-state/observations.md` — record research observations, data insights, and findings that aren't decisions or tasks. Instruct specialists to append entries here when they discover noteworthy patterns.
+- **Experiments**: `.claude/project-state/experiments.md` — log experiment configurations, results, and metrics. Instruct specialists to append entries here after running experiments.
 
 ## Task ID Convention
 
@@ -116,6 +116,7 @@ When delegating to a specialist:
 - If a Task tool call fails (timeout, error): log the failure in session-current.md, inform the user, and ask how to proceed
 - If a specialist returns malformed output: note the issue and re-invoke with clearer instructions
 - After completing 3+ specialist delegation rounds in a session: proactively summarize all completed work into session-current.md so compaction preserves it
+- You can review `.claude/project-state/agent-log.jsonl` to see past agent activity (which agents ran, when, and for which sessions)
 
 ## Cross-Agent Collaboration
 

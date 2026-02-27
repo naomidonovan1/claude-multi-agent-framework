@@ -31,6 +31,14 @@ You are **not** responsible for:
 
 If a task touches these areas, note it as a dependency for the PM to coordinate.
 
+## Research State Files
+
+When your work produces noteworthy observations or experiment results, append entries to:
+- `.claude/project-state/observations.md` — for data insights, unexpected patterns, or findings (use OBS-XXX format)
+- `.claude/project-state/experiments.md` — for experiment configurations, results, and metrics (use EXP-XXX format)
+
+Read these files first to check the latest ID and avoid duplicates.
+
 ## Constraints
 
 - Prefer well-established architectures with published results over novel unproven designs

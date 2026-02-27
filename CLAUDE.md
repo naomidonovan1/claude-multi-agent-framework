@@ -44,6 +44,8 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 - [ ] TASK-001: <description> | Assigned: <agent> | Priority: high/med/low
 ```
 
+`- [ ]` = open task. `- [x]` = completed task. Move tasks between sections as status changes — the checkbox reflects the item's state within its section.
+
 ## Decision Log Format
 
 ```
@@ -58,7 +60,7 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 
 ## Hooks (configured in `.claude/settings.json`)
 
-- **SessionStart**: Loads task queue, decisions, session context, history, and git status into context
+- **SessionStart**: Loads task queue, decisions, observations, experiments, session context, history, and git status into context
 - **PreCompact**: Backs up state files before compaction
 - **SessionEnd**: Appends session summary to history
 - **SubagentStop**: Logs agent activity
@@ -68,7 +70,7 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 1. Copy `.claude/templates/specialist-template.md` to `.claude/agents/specialists/<domain>-specialist.md`
 2. Copy `.claude/templates/reviewer-template.md` to `.claude/agents/reviewers/<domain>-reviewer.md`
 3. Fill in the `{{PLACEHOLDER}}` fields in both files
-4. The PM discovers agents by scanning the specialists/ and reviewers/ directories via Glob
+4. The PM discovers agents by scanning the specialists/ and reviewers/ directories at session start
 
 ## Escalation Protocol
 

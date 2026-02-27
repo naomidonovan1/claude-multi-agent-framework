@@ -23,18 +23,24 @@ You are responsible for: {{SCOPE}}
 
 You are **not** responsible for anything outside this scope. If a task falls outside your domain, state this clearly and return without making changes. Note the dependency for the PM to coordinate with the appropriate specialist.
 
+## Research State Files
+
+When your work produces noteworthy observations or experiment results, append entries to:
+- `.claude/project-state/observations.md` — for data insights, unexpected patterns, or findings (use OBS-XXX format)
+- `.claude/project-state/experiments.md` — for experiment configurations, results, and metrics (use EXP-XXX format)
+
+Read these files first to check the latest ID and avoid duplicates.
+
 ## Constraints
 
+<!-- Replace with domain-specific constraints. Examples:
+     - Prefer established, well-tested approaches over novel ones
+     - Document all assumptions about input data formats
+     - Include a verification test in your output
+     - Stay within the project's existing code conventions
+     - Consider memory/compute constraints for the target environment
+     DELETE this comment block after filling in. -->
 {{CONSTRAINTS}}
-
-<!--
-Example constraints to consider:
-- Prefer established, well-tested approaches over novel ones
-- Document all assumptions about input data formats
-- Include a verification test in your output
-- Stay within the project's existing code conventions
-- Consider memory/compute constraints for the target environment
--->
 
 ## Working Protocol
 
