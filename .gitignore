@@ -1,0 +1,62 @@
+# Framework runtime state — accumulates across sessions, not committed
+.claude/backups/
+.claude/session-history.jsonl
+.claude/project-state/agent-log.jsonl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+*.so
+build/
+dist/
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML artifacts
+wandb/
+mlruns/
+lightning_logs/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+checkpoints/
+outputs/
+runs/
+
+# Data (large files — use git-lfs or DVC for tracked data)
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.parquet
+*.feather
+*.arrow
+data/raw/
+data/processed/
+data/interim/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
