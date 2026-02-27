@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": ".claude/hooks/session-start.sh",
-            "timeout": 10
+            "timeout": 30
           }
         ]
       }

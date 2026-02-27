@@ -4,13 +4,12 @@
 This file is updated by the PM during a session and read by hooks for context preservation.
 The PM should clear stale content from this file at the start of each new session.
 
-Contents should include:
-- What the user is working on this session
-- Active tasks and their current status
-- Key decisions made this session
-- Which agents were invoked and their outcomes
-- Blockers or open questions
-- Any in-progress agent work that hasn't completed yet
+IMPORTANT: The section headers below are hook-parsed (session-end.sh) and MUST NOT be renamed.
+- ### Active Focus — single line, used for session summary
+- ### Tasks Touched This Session — bullet list of TASK-IDs
+- ### Agent Invocations This Session
+- ### Decisions Made This Session
+- ### Open Questions / Blockers
 -->
 
 ### Active Focus

@@ -6,11 +6,18 @@
 
 set -euo pipefail
 
-# Read stdin (Claude Code hook protocol)
-INPUT=$(cat)
-CWD=$(echo "$INPUT" | jq -r '.cwd // "."' 2>/dev/null || echo ".")
+# --- Dependencies & safety ---
+command -v jq &>/dev/null || exit 0
 
-PROJECT_ROOT="$CWD"
+# Read stdin and parse CWD in a single jq call
+INPUT=$(cat)
+CWD_RAW=$(echo "$INPUT" | jq -r '.cwd // "."' 2>/dev/null || echo ".")
+
+PROJECT_ROOT="$CWD_RAW"
+[[ -d "$PROJECT_ROOT/.claude" ]] || exit 0
+
+trap 'echo "[$(date)] $0: ERROR line $LINENO" >> "$PROJECT_ROOT/.claude/hooks/error.log"' ERR
+
 STATE_DIR="$PROJECT_ROOT/.claude/project-state"
 BACKUP_DIR="$PROJECT_ROOT/.claude/backups"
 

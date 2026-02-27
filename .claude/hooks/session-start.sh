@@ -7,28 +7,42 @@
 
 set -euo pipefail
 
-# Read stdin (Claude Code hook protocol)
-INPUT=$(cat)
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null || echo "unknown")
-SOURCE=$(echo "$INPUT" | jq -r '.source // "unknown"' 2>/dev/null || echo "unknown")
-CWD=$(echo "$INPUT" | jq -r '.cwd // "."' 2>/dev/null || echo ".")
+# --- Dependencies & safety ---
+command -v jq &>/dev/null || exit 0
 
-PROJECT_ROOT="$CWD"
+# Read stdin and parse all fields in a single jq call
+INPUT=$(cat)
+eval "$(echo "$INPUT" | jq -r '
+  "SESSION_ID=" + (.session_id // "unknown") + "\n" +
+  "SOURCE=" + (.source // "unknown") + "\n" +
+  "CWD_RAW=" + (.cwd // ".")
+' 2>/dev/null || echo 'SESSION_ID=unknown; SOURCE=unknown; CWD_RAW=.')"
+
+PROJECT_ROOT="$CWD_RAW"
+[[ -d "$PROJECT_ROOT/.claude" ]] || exit 0
+
+trap 'echo "[$(date)] $0: ERROR line $LINENO" >> "$PROJECT_ROOT/.claude/hooks/error.log"' ERR
+
 STATE_DIR="$PROJECT_ROOT/.claude/project-state"
 HISTORY_FILE="$PROJECT_ROOT/.claude/session-history.jsonl"
+AGENT_LOG="$STATE_DIR/agent-log.jsonl"
 
 # Build context string
 CONTEXT=""
 
 CONTEXT+="=== PROJECT STATE (session: $SESSION_ID, source: $SOURCE) ==="$'\n\n'
 
-# --- Task Queue ---
+# --- Task Queue (flat-list format: filter out done tasks when >20) ---
 TASKS_FILE="$STATE_DIR/tasks.md"
 if [[ -f "$TASKS_FILE" ]]; then
+    done_count=$(grep -c 'Status: done' "$TASKS_FILE" 2>/dev/null || echo "0")
     line_count=$(wc -l < "$TASKS_FILE" | tr -d ' ')
-    if [[ "$line_count" -gt 50 ]]; then
+    if [[ "$done_count" -gt 20 ]]; then
+        CONTEXT+="## Task Queue (${done_count} done tasks hidden)"$'\n'
+        CONTEXT+=$(grep -v 'Status: done' "$TASKS_FILE" 2>/dev/null || true)$'\n'
+    elif [[ "$line_count" -gt 50 ]]; then
         CONTEXT+="## Task Queue (summarized — $line_count lines)"$'\n'
-        CONTEXT+=$(grep -E '^(##|###|- \[)' "$TASKS_FILE" 2>/dev/null || true)$'\n'
+        CONTEXT+=$(grep -E '^(##|- \[)' "$TASKS_FILE" 2>/dev/null || true)$'\n'
     else
         CONTEXT+="## Task Queue"$'\n'
         CONTEXT+=$(cat "$TASKS_FILE")$'\n'
@@ -45,7 +59,6 @@ if [[ -f "$DECISIONS_FILE" ]]; then
     line_count=$(wc -l < "$DECISIONS_FILE" | tr -d ' ')
     if [[ "$line_count" -gt 80 ]]; then
         CONTEXT+="## Decision Log (last 3 of many)"$'\n'
-        # Get the line number of the 3rd-from-last DEC- header (Bash 3.2 compatible)
         start_line=$(grep -n '^### DEC-' "$DECISIONS_FILE" 2>/dev/null | tail -3 | head -1 | cut -d: -f1)
         if [[ -n "$start_line" ]]; then
             CONTEXT+=$(sed -n "${start_line},\$p" "$DECISIONS_FILE")$'\n'
@@ -111,14 +124,11 @@ CONTEXT+=$'\n'
 # --- User Preferences (strip comments, structure-aware truncation) ---
 PREFS_FILE="$STATE_DIR/preferences.md"
 if [[ -f "$PREFS_FILE" ]] && [[ -s "$PREFS_FILE" ]]; then
-    # Strip HTML comment blocks and the file's own # header before injection
     prefs_clean=$(sed '/^<!--/,/-->/d' "$PREFS_FILE" | grep -v '^# ' | sed '/^$/N;/^\n$/d')
-    # Count actual preference entries (lines starting with "- ")
     entry_total=$(echo "$prefs_clean" | grep -c '^- ' 2>/dev/null || echo "0")
     if [[ "$entry_total" -gt 0 ]]; then
         CONTEXT+="## User Preferences"$'\n'
         if [[ "$entry_total" -gt 40 ]]; then
-            # Large: extract all ### sections with up to 10 entries each
             current_section=""
             entry_count=0
             while IFS= read -r pline; do
@@ -139,11 +149,22 @@ if [[ -f "$PREFS_FILE" ]] && [[ -s "$PREFS_FILE" ]]; then
             done <<< "$prefs_clean"
             CONTEXT+=$'\n'"_(${entry_total} total preferences — read .claude/project-state/preferences.md for full list)_"$'\n'
         else
-            # Small: inject cleaned content directly
             CONTEXT+="$prefs_clean"$'\n'
         fi
         CONTEXT+=$'\n'
     fi
+fi
+
+# --- Recent Agent Activity (last 5 entries) ---
+if [[ -f "$AGENT_LOG" ]] && [[ -s "$AGENT_LOG" ]]; then
+    CONTEXT+="## Recent Agent Activity (last 5)"$'\n'
+    while IFS= read -r line; do
+        ts=$(echo "$line" | jq -r '.timestamp // "?"' 2>/dev/null || echo "?")
+        atype=$(echo "$line" | jq -r '.agent_type // "?"' 2>/dev/null || echo "?")
+        action=$(echo "$line" | jq -r '.action // "?"' 2>/dev/null || echo "?")
+        CONTEXT+="- [$ts] $atype: $action"$'\n'
+    done < <(tail -5 "$AGENT_LOG")
+    CONTEXT+=$'\n'
 fi
 
 # --- Recent Session History (last 5) ---
