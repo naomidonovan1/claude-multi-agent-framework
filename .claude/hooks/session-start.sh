@@ -108,6 +108,39 @@ else
 fi
 CONTEXT+=$'\n'
 
+# --- User Preferences (structure-aware: preserves all domain headers) ---
+PREFS_FILE="$STATE_DIR/preferences.md"
+if [[ -f "$PREFS_FILE" ]] && [[ -s "$PREFS_FILE" ]]; then
+    # Strip HTML comments and blank lines to count real content
+    content_lines=$(grep -v '^<!--' "$PREFS_FILE" | grep -v '^-->' | grep -v '^$' | grep -v '^#\s' | wc -l | tr -d ' ')
+    line_count=$(wc -l < "$PREFS_FILE" | tr -d ' ')
+    if [[ "$line_count" -gt 80 ]]; then
+        # Large file: extract header + all ### sections with up to 8 entries each
+        CONTEXT+="## User Preferences (summarized — $line_count lines, read full file for complete list)"$'\n'
+        CONTEXT+="# User Preferences"$'\n'
+        current_section=""
+        entry_count=0
+        while IFS= read -r pline; do
+            if [[ "$pline" =~ ^###\  ]]; then
+                current_section="$pline"
+                entry_count=0
+                CONTEXT+=$'\n'"$pline"$'\n'
+            elif [[ "$pline" =~ ^-\  ]] && [[ -n "$current_section" ]]; then
+                entry_count=$((entry_count + 1))
+                if [[ "$entry_count" -le 8 ]]; then
+                    CONTEXT+="$pline"$'\n'
+                elif [[ "$entry_count" -eq 9 ]]; then
+                    CONTEXT+="- ... (more entries — read preferences.md)"$'\n'
+                fi
+            fi
+        done < "$PREFS_FILE"
+    else
+        CONTEXT+="## User Preferences"$'\n'
+        CONTEXT+=$(cat "$PREFS_FILE")$'\n'
+    fi
+    CONTEXT+=$'\n'
+fi
+
 # --- Recent Session History (last 5) ---
 if [[ -f "$HISTORY_FILE" ]] && [[ -s "$HISTORY_FILE" ]]; then
     CONTEXT+="## Recent Session History (last 5)"$'\n'

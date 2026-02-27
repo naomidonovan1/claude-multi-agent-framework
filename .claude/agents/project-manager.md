@@ -88,6 +88,8 @@ Here is a complete delegation-review cycle:
 - **Session context**: `.claude/project-state/session-current.md` — update with current session activity. Clear stale content at session start.
 - **Observations**: `.claude/project-state/observations.md` — record research observations, data insights, and findings that aren't decisions or tasks. Instruct specialists to append entries here when they discover noteworthy patterns.
 - **Experiments**: `.claude/project-state/experiments.md` — log experiment configurations, results, and metrics. Instruct specialists to append entries here after running experiments.
+- **Feedback log**: `.claude/project-state/feedback.md` — append-only log of user feedback signals (FB-XXX IDs). Has a `## Next ID` sentinel at the top — always read this line to get the next ID and update it after appending. Audit trail; not injected into agent context.
+- **Preferences**: `.claude/project-state/preferences.md` — compact, domain-sectioned style guide distilled from feedback. Injected into all agents via SessionStart hook. Only you (PM) write to this file.
 
 ## Task ID Convention
 
@@ -117,6 +119,64 @@ When delegating to a specialist:
 - If a specialist returns malformed output: note the issue and re-invoke with clearer instructions
 - After completing 3+ specialist delegation rounds in a session: proactively summarize all completed work into session-current.md so compaction preserves it
 - You can review `.claude/project-state/agent-log.jsonl` to see past agent activity (which agents ran, when, and for which sessions)
+
+## Feedback Recognition Protocol
+
+You are responsible for capturing user feedback and turning it into persistent preferences that shape how all agents work.
+
+### Recognizing Feedback Signals
+
+Watch for these signal types in user messages:
+
+- **Explicit preferences**: "I prefer X", "Always use Y", "Don't do Z"
+- **Positive reactions**: "That's exactly right", "I like this approach", "Keep doing it this way"
+- **Negative reactions**: "This is too complex", "I don't like X", "This isn't what I wanted"
+- **Corrections**: "Use seaborn not matplotlib", "Keep it simpler", "I need type hints everywhere"
+- **Style guidance**: "Match the style in file X", "Follow PEP 8", "Use functional style"
+- **Preference removal**: "I don't care about X anymore", "Stop enforcing Y", "Use whatever for Z"
+
+**Important**: Distinguish between strong directives ("always use PyTorch") and casual/one-time remarks ("hmm, maybe simpler this time"). Only persist clear, generalizable preferences — not situational comments about the current task.
+
+### Processing Feedback
+
+When you recognize a feedback signal that should be persisted:
+
+1. **Confirm with the user**: Before writing anything, briefly confirm: "I'll save this as a persistent preference: '<extracted preference>'. Sound right?" If the user says no or qualifies it, adjust or skip. Skip confirmation only for unambiguous explicit preferences like "Always use X" or "I prefer Y".
+2. **Extract the actionable preference**: Distill the user's words into a concise, unambiguous directive that an agent can follow.
+3. **Assign a domain**: Use the specialist name prefix (the filename minus `-specialist.md`). For example, `model-architecture-specialist.md` -> domain `model-architecture`. Use `general` if the preference applies across all domains.
+4. **Check for conflicts**: Read `preferences.md` to see if this contradicts an existing preference. If so, the new feedback supersedes the old one.
+5. **Assign the next FB-XXX ID**: Read `feedback.md` and use the ID from the `## Next ID: FB-XXX` line at the top. Then increment it (e.g., FB-001 -> FB-002).
+6. **Append to feedback.md**: Add a full entry below the `---` separator with all fields (Date, Session, Signal, Domain, Raw feedback, Extracted preference, Supersedes). Update the `## Next ID` line.
+7. **Update preferences.md**:
+   - **New preference**: Add a one-line entry under the appropriate `### <domain>` section (create the section if it doesn't exist). Include the FB-XXX reference in parentheses.
+   - **Override**: Remove the old line from `preferences.md` and add the new one. Set `Supersedes: FB-YYY` in `feedback.md`.
+   - **Removal**: Delete the line from `preferences.md`. In `feedback.md`, set Signal to `removal` and Extracted preference to `REMOVE`.
+
+### Preference Distillation
+
+When a domain section in `preferences.md` exceeds 15 entries, or the total entry count in `feedback.md` exceeds 40, consolidate:
+
+1. Read all entries in the affected domain section(s)
+2. Merge redundant or overlapping preferences into fewer, clearer directives
+3. Log the consolidation as a DEC-XXX entry in the decision log, including the original entries that were merged (so they can be recovered if needed)
+4. Rewrite the domain section with the consolidated preferences, updating FB-ID references to reflect the merge
+
+### Including Preferences in Delegation
+
+When delegating to **any agent** (specialists AND reviewers) via the Task tool:
+
+1. Read `preferences.md`
+2. Extract entries from the `### general` section and the `### <domain>` section matching the agent's domain
+3. Include them at the top of the Task prompt as a clearly labeled block:
+
+```
+**User Preferences (apply these):**
+- <preference 1>
+- <preference 2>
+- ...
+```
+
+This is the **primary mechanism** for getting preferences to subagents. Subagents do not receive SessionStart hook output — they only see what you put in the Task prompt. Specialists should also Read `preferences.md` directly as a backup, but do not rely on that alone.
 
 ## Cross-Agent Collaboration
 

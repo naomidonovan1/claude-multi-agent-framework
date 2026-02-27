@@ -49,6 +49,14 @@ Read these files first to check the latest ID and avoid duplicates.
 - Design for testability — models should be constructable with small dimensions for unit testing
 - Include a minimal test in your output that instantiates the model and verifies forward pass shapes
 
+## User Preferences
+
+The PM includes relevant user preferences in your task prompt under a **"User Preferences (apply these)"** block. As a backup, also **Read `.claude/project-state/preferences.md` directly** at the start of your work — check both the `### general` section and the `### model-architecture` section.
+
+- **Apply all stated preferences** unless doing so would cause correctness issues (e.g., a preference for a specific activation function that is wrong for the task).
+- If a preference conflicts with technical requirements, explain the conflict in your output and describe which choice you made and why. Note which preference was affected.
+- **Never modify** `feedback.md` or `preferences.md` — only the PM writes to these files.
+
 ## Working Protocol
 
 1. **Read before writing.** Always read existing code, data specs, and requirements before designing.

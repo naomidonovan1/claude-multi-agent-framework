@@ -33,6 +33,8 @@ User -> PM -> Specialist(s) -> Reviewer(s) -> Integration Agent
 | `.claude/project-state/session-current.md` | Current session working context | PM |
 | `.claude/project-state/observations.md` | Research observations and notes | PM / Specialists |
 | `.claude/project-state/experiments.md` | Experiment log (params, results, metrics) | PM / Specialists |
+| `.claude/project-state/feedback.md` | Append-only feedback signal log (FB-XXX) | PM |
+| `.claude/project-state/preferences.md` | Distilled user preferences (injected at session start) | PM |
 | `.claude/project-state/agent-log.jsonl` | Agent activity log | SubagentStop hook |
 | `.claude/session-history.jsonl` | Cross-session summaries | SessionEnd hook |
 
@@ -60,7 +62,7 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 
 ## Hooks (configured in `.claude/settings.json`)
 
-- **SessionStart**: Loads task queue, decisions, observations, experiments, session context, history, and git status into context
+- **SessionStart**: Loads task queue, decisions, observations, experiments, user preferences, session context, history, and git status into context
 - **PreCompact**: Backs up state files before compaction
 - **SessionEnd**: Appends session summary to history
 - **SubagentStop**: Logs agent activity
@@ -78,3 +80,14 @@ Section headers must be exactly `### TODO`, `### IN-PROGRESS`, `### IN-REVIEW`, 
 2. Specialist addresses must-fix items -> Reviewer re-reviews
 3. After 2 rounds of disagreement -> PM decides and logs reasoning
 4. If PM is uncertain -> User is asked directly
+
+## User Feedback & Preferences
+
+The framework learns from user feedback across sessions via two files:
+
+- **`feedback.md`**: Append-only audit log of every feedback signal (FB-XXX IDs). Has a `## Next ID` sentinel at the top for reliable ID assignment. Not injected into agent context.
+- **`preferences.md`**: Compact, domain-sectioned style guide distilled from feedback. Injected by SessionStart hook into the PM's context. Domain sections use `### <domain>` headers matching specialist name prefixes (e.g., `### model-architecture` for `model-architecture-specialist`).
+
+**How it works**: When the user expresses a clear, generalizable preference (e.g., "I prefer seaborn", "always keep it simpler"), the PM confirms with the user, then logs it in `feedback.md` and adds a concise directive to `preferences.md`. New contradicting feedback supersedes the old entry. Users can also remove preferences without replacement. The PM includes domain-relevant preferences directly in Task prompts when delegating to both specialists and reviewers — this is the primary mechanism, since subagents do not receive SessionStart hook output.
+
+Specialists must Read `preferences.md` directly and apply all stated preferences. Reviewers check preference compliance as part of their review criteria, with unjustified violations classified as should-fix or must-fix.
